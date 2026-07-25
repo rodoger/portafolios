@@ -309,7 +309,7 @@
   // La columna PDF es opcional: si tiene una URL, aparece el botón
   // "Descargar PDF" en ese proyecto; si está vacía, el botón no se muestra.
   // -----------------------------------------------------------------
-  const SHEET_CSV_URL = '';
+  const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR3S282oj90LbGAyGO83wKr1YoZYa21lUuqWN8SJVAYepc7vVt2KMRqYFJLhTDEUg/pub?output=csv';
 
   document.getElementById('printLink').addEventListener('click', (e)=>{ e.preventDefault(); window.print(); closeNav(); });
 
@@ -431,7 +431,7 @@
       <section class="hero">
         <span class="eyebrow">Obras seleccionadas</span>
         <h1>Portafolios &nbsp;${GLYPH_HTML}</h1>
-        <p class="lead">Reseñas de proyectos de diseño gráfico, diseño multimedia y comunicación visual de Rodolfo&nbsp;Gerardo&nbsp;Ortiz&nbsp;Morales</p>
+        <p class="lead">Reseñas de proyectos de diseño gráfico, diseño multimedia y comunicación visual de <b>Rodolfo&nbsp;Gerardo&nbsp;Ortiz&nbsp;Morales</b></p>
       </section>
 
       <section class="index-section" id="indice">
