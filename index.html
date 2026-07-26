@@ -213,12 +213,48 @@
     font-size: clamp(1.6rem, 4vw, 2.9rem); line-height: 1.05; margin: 6px 0 0;
   }
   .project .figure{
+    position: relative;
     width: 100%; aspect-ratio: 16/10; overflow:hidden; background: var(--paper-2);
     border: 1px solid var(--rule); margin: 30px 0;
   }
   .project .figure img{ width:100%; height:100%; object-fit: cover; display:block; }
   .project .figure.vertical{
     aspect-ratio: 3/4; max-width: 480px; margin-left: auto; margin-right: auto;
+  }
+  .figure-freeze{ position:absolute; inset:0; width:100%; height:100%; display:none; }
+  .figure-controls{
+    position:absolute; top:12px; right:12px; z-index:2;
+    display:flex; gap:8px;
+  }
+  .fig-btn{
+    width:36px; height:36px; border-radius:50%; border:1px solid rgba(255,255,255,.55);
+    background: rgba(20,18,16,.5); color:#fff; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; backdrop-filter: blur(2px);
+  }
+  .fig-btn:hover{ background: rgba(20,18,16,.8); }
+  .fig-btn svg{ width:16px; height:16px; }
+
+  /* ---------- Lightbox ---------- */
+  .lightbox-overlay{
+    position: fixed; inset: 0; background: rgba(18,16,14,.94); z-index: 300;
+    display:none; align-items:center; justify-content:center; padding: 5vh 5vw;
+  }
+  .lightbox-overlay.open{ display:flex; }
+  .lightbox-media{ position:relative; display:flex; }
+  .lightbox-overlay img{
+    max-width: 92vw; max-height: 88vh; object-fit: contain;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .lightbox-media canvas{ position:absolute; inset:0; width:100%; height:100%; display:none; }
+  .lightbox-close{
+    position: fixed; top: 22px; right: 26px; width:42px; height:42px; border-radius:50%;
+    border: 1px solid rgba(255,255,255,.5); background: rgba(0,0,0,.4); color:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; z-index: 301;
+  }
+  .lightbox-close:hover{ background: rgba(0,0,0,.7); }
+  .lightbox-controls{
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 301;
+    display:flex; gap:10px;
   }
   .figure .fallback{
     width:100%; height:100%; display:flex; align-items:center; justify-content:center;
@@ -286,6 +322,7 @@
     }
     header.site{ display:none !important; }
     .no-print{ display:none !important; }
+    .figure-controls, .lightbox-overlay{ display:none !important; }
     body{ background: #fff; }
     .glyph-open, .glyph-closed{ animation: none; opacity: 1; }
     .glyph-closed{ display: none; }
@@ -306,8 +343,8 @@
     .project-meta div span.value{ font-size: 8pt !important; }
     .project-meta div span.label{ font-size: 5.5pt !important; }
     .project-desc{ font-size: 9pt !important; line-height: 1.45 !important; }
-    .project .figure{ aspect-ratio: 4/3 !important; max-height: 12cm !important; width: auto !important; max-width: 100% !important; margin: 10px auto !important; }
-    .project .figure.vertical{ aspect-ratio: 3/4 !important; max-height: 16cm !important; max-width: 80% !important; margin: 10px auto !important; }
+    .project .figure{ aspect-ratio: 4/3 !important; max-height: 9cm !important; width: auto !important; max-width: 100% !important; margin: 10px auto !important; }
+    .project .figure.vertical{ aspect-ratio: 3/4 !important; max-height: 8cm !important; max-width: 45% !important; margin: 10px auto !important; }
     @page{ margin: 1.6cm; }
     @page{
       @bottom-center{ content: counter(page); font-family: monospace; font-size: 9pt; color: #55534c; }
@@ -334,6 +371,16 @@
 <main id="mainContent">
   <div class="loading-msg" id="loadingMsg">Cargando portafolios…</div>
 </main>
+
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Cerrar">✕</button>
+  <div class="lightbox-media" id="lightboxMedia">
+    <img id="lightboxImg" src="" alt="">
+  </div>
+  <div class="lightbox-controls" id="lightboxControls" style="display:none;">
+    <button type="button" class="fig-btn" id="lightboxPlayPause" data-paused="0" title="Pausar"></button>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -419,6 +466,12 @@
       .sort((a,b)=> (parseFloat(a.orden)||9999) - (parseFloat(b.orden)||9999));
   }
 
+  const ICON_EXPAND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>`;
+  const ICON_PAUSE = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`;
+  const ICON_PLAY = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8V4z"/></svg>`;
+
+  function isGif(url){ return /\.gif(\?|#|$)/i.test(url || ''); }
+
   function figureHTML(imgUrl, titulo, orientacion){
     const src = driveDirect(imgUrl);
     const isVertical = norm(orientacion).startsWith('vert');
@@ -426,7 +479,18 @@
     if(!src){
       return `<div class="${cls}"><div class="fallback">Sin imagen</div></div>`;
     }
-    return `<div class="${cls}"><img src="${src}" alt="${titulo}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;fallback&quot;>Imagen no disponible</div>'"></div>`;
+    const gifBtn = isGif(src)
+      ? `<button type="button" class="fig-btn fig-play-pause" data-paused="0" title="Pausar">${ICON_PAUSE}</button>`
+      : '';
+    const canvasEl = isGif(src) ? `<canvas class="figure-freeze"></canvas>` : '';
+    return `<div class="${cls}">
+      <img class="figure-img" src="${src}" alt="${titulo}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;fallback&quot;>Imagen no disponible</div>'">
+      ${canvasEl}
+      <div class="figure-controls">
+        ${gifBtn}
+        <button type="button" class="fig-btn fig-expand" title="Ver a pantalla completa">${ICON_EXPAND}</button>
+      </div>
+    </div>`;
   }
 
   const GLYPH_HTML = `<span class="glyph-wrap" role="img" aria-label="marca gráfica"><span class="layer glyph-open"></span><span class="layer glyph-closed"></span></span>`;
@@ -585,6 +649,114 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
       }
     });
   }
+
+  // ---------- Fullscreen lightbox + GIF pause/play ----------
+  const lightboxOverlay = document.getElementById('lightboxOverlay');
+  const lightboxMedia = document.getElementById('lightboxMedia');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxClose = document.getElementById('lightboxClose');
+  const lightboxControls = document.getElementById('lightboxControls');
+  const lightboxPlayPause = document.getElementById('lightboxPlayPause');
+  let lightboxCanvas = null;
+
+  function freezeFrame(img, canvas, mode){
+    const rect = img.getBoundingClientRect();
+    if(!rect.width || !rect.height) return false;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const nw = img.naturalWidth || rect.width;
+    const nh = img.naturalHeight || rect.height;
+    let dw, dh, dx, dy;
+    if(mode === 'cover'){
+      const scale = Math.max(rect.width / nw, rect.height / nh);
+      dw = nw * scale; dh = nh * scale;
+      dx = (rect.width - dw) / 2; dy = (rect.height - dh) / 2;
+    }else{
+      dw = rect.width; dh = rect.height; dx = 0; dy = 0;
+    }
+    try{
+      ctx.drawImage(img, dx, dy, dw, dh);
+      return true;
+    }catch(err){
+      return false; // e.g. tainted canvas from a cross-origin image without CORS headers
+    }
+  }
+
+  function togglePlayPause(btn, img, canvas, mode){
+    const isPaused = btn.dataset.paused === '1';
+    if(!isPaused){
+      if(freezeFrame(img, canvas, mode)){
+        canvas.style.display = 'block';
+        img.style.visibility = 'hidden';
+        btn.dataset.paused = '1';
+        btn.innerHTML = ICON_PLAY;
+        btn.title = 'Reproducir';
+      }
+    }else{
+      canvas.style.display = 'none';
+      img.style.visibility = 'visible';
+      btn.dataset.paused = '0';
+      btn.innerHTML = ICON_PAUSE;
+      btn.title = 'Pausar';
+    }
+  }
+
+  function openLightbox(sourceImg){
+    lightboxImg.src = sourceImg.currentSrc || sourceImg.src;
+    lightboxImg.alt = sourceImg.alt || '';
+    lightboxOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    if(isGif(sourceImg.src)){
+      lightboxControls.style.display = 'flex';
+      lightboxPlayPause.dataset.paused = '0';
+      lightboxPlayPause.innerHTML = ICON_PAUSE;
+      if(!lightboxCanvas){
+        lightboxCanvas = document.createElement('canvas');
+        lightboxMedia.appendChild(lightboxCanvas);
+      }
+      lightboxCanvas.style.display = 'none';
+      lightboxImg.style.visibility = 'visible';
+    }else{
+      lightboxControls.style.display = 'none';
+    }
+  }
+
+  function closeLightbox(){
+    lightboxOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    if(lightboxCanvas) lightboxCanvas.style.display = 'none';
+    lightboxImg.style.visibility = 'visible';
+  }
+
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightboxOverlay.addEventListener('click', (e)=>{ if(e.target === lightboxOverlay) closeLightbox(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeLightbox(); });
+  lightboxPlayPause.addEventListener('click', ()=>{
+    if(!lightboxCanvas) return;
+    togglePlayPause(lightboxPlayPause, lightboxImg, lightboxCanvas, 'contain');
+  });
+
+  document.addEventListener('click', (e)=>{
+    const expandBtn = e.target.closest('.fig-expand');
+    if(expandBtn){
+      const img = expandBtn.closest('.figure')?.querySelector('img.figure-img');
+      if(img) openLightbox(img);
+      return;
+    }
+    const ppBtn = e.target.closest('.fig-play-pause');
+    if(ppBtn){
+      const fig = ppBtn.closest('.figure');
+      const img = fig.querySelector('img.figure-img');
+      const canvas = fig.querySelector('canvas.figure-freeze');
+      if(img && canvas) togglePlayPause(ppBtn, img, canvas, 'cover');
+    }
+  });
 
   if(SHEET_CSV_URL){
     loadFromUrl(SHEET_CSV_URL);
