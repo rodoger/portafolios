@@ -210,7 +210,7 @@
   .plate b{ color: var(--accent); }
   .project h2{
     font-family:'Fraunces', serif; font-weight: 500; font-style: normal;
-    font-size: clamp(2.1rem, 6vw, 4.4rem); line-height: 1; margin: 6px 0 0;
+    font-size: clamp(1.6rem, 4vw, 2.9rem); line-height: 1.05; margin: 6px 0 0;
   }
   .project .figure{
     width: 100%; aspect-ratio: 16/10; overflow:hidden; background: var(--paper-2);
@@ -306,8 +306,8 @@
     .project-meta div span.value{ font-size: 8pt !important; }
     .project-meta div span.label{ font-size: 5.5pt !important; }
     .project-desc{ font-size: 9pt !important; line-height: 1.45 !important; }
-    .project .figure{ aspect-ratio: 4/3 !important; margin: 14px 0 !important; }
-    .project .figure.vertical{ aspect-ratio: 3/4 !important; max-width: 80% !important; }
+    .project .figure{ aspect-ratio: 4/3 !important; max-height: 9cm !important; width: auto !important; max-width: 100% !important; margin: 10px auto !important; }
+    .project .figure.vertical{ aspect-ratio: 3/4 !important; max-height: 8cm !important; max-width: 45% !important; margin: 10px auto !important; }
     @page{ margin: 1.6cm; }
     @page{
       @bottom-center{ content: counter(page); font-family: monospace; font-size: 9pt; color: #55534c; }
