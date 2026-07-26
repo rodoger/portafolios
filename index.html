@@ -521,7 +521,7 @@
       return `
       <section class="project" id="p-${i+1}" data-idx="${i}" data-anio="${p.anio}" data-cliente="${p.cliente}" data-categoria="${p.categoria}" data-search="${search}">
         <div class="project-head">
-          <div class="plate">Pieza N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
+          <div class="plate">Obra N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
           <div class="eyebrow">${p.categoria || ''}</div>
         </div>
         <h2>${p.titulo || 'Sin título'}</h2>
@@ -535,8 +535,8 @@
           <div class="project-desc">
             <p>${p.descripcion || ''}</p>
             <div class="desc-actions">
-              ${p.enlace ? `<a class="ext-link" href="${p.enlace}" target="_blank" rel="noopener">Ver caso completo →</a>` : ''}
-              ${p.pdf ? `<a class="pdf-btn no-print" href="${p.pdf}" target="_blank" rel="noopener">Descargar PDF ↓</a>` : ''}
+              ${p.enlace ? `<a class="ext-link" href="${p.enlace}" target="_blank" rel="noopener">Recurso en lienea →</a>` : ''}
+              ${p.pdf ? `<a class="pdf-btn no-print" href="${p.pdf}" target="_blank" rel="noopener">Documento PDF ↓</a>` : ''}
             </div>
           </div>
         </div>
