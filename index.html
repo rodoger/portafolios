@@ -152,6 +152,20 @@
   /* ---------- Index / TOC ---------- */
   .index-section{ max-width: var(--max); margin: 0 auto; padding: 10px var(--edge) clamp(60px,8vw,110px); }
   .index-section .eyebrow{ display:block; margin-bottom: 22px; }
+
+  .stats-section{ max-width: var(--max); margin: 0 auto; padding: 10px var(--edge) clamp(30px,5vw,50px); }
+  .stats-section .eyebrow{ display:block; margin-bottom: 16px; }
+  .stats-list{ display:flex; flex-wrap:wrap; gap: 10px; }
+  .stat-chip{
+    font-family:'IBM Plex Mono', monospace; font-size: 0.75rem; letter-spacing:.03em;
+    color: var(--ink-soft); 
+    padding: 7px 14px; white-space: nowrap;
+  }
+  .stat-chip b{ color: var(--accent); font-weight: 500; margin-left: 2px; }
+
+  .index-list-wrap{ max-height: 6000px; overflow: hidden; transition: max-height .35s ease; }
+  .index-list-wrap.collapsed{ max-height: 0; }
+
   .toc{ list-style:none; margin:0; padding:0; border-top: 1px solid var(--rule); }
   .toc li{ border-bottom: 1px solid var(--rule); }
   .toc a{
@@ -326,10 +340,11 @@
     body{ background: #fff; }
     .glyph-open, .glyph-closed{ animation: none; opacity: 1; }
     .glyph-closed{ display: none; }
-    .hero, .index-section, .project, footer.site{ max-width: 100%; }
+    .hero, .stats-section, .index-section, .project, footer.site{ max-width: 100%; }
     .project{ break-inside: avoid; page-break-before: always; border-top:none; padding-top: 20px; }
     .project:first-of-type{ page-break-before: auto; }
     .index-section{ page-break-after: always; }
+    .index-list-wrap, .index-list-wrap.collapsed{ max-height: none !important; overflow: visible !important; }
     .figure{ break-inside: avoid; }
     a.ext-link::after{ content: " (" attr(href) ")"; font-size: 0.7em; }
 
@@ -343,12 +358,12 @@
     .project-meta div span.value{ font-size: 8pt !important; }
     .project-meta div span.label{ font-size: 5.5pt !important; }
     .project-desc{ font-size: 9pt !important; line-height: 1.45 !important; }
-	  /* ---------- cambio tamaño de impresión de imagenes---------- */
+	   /* ---------- cambio tamaño de impresión de imagenes---------- */
     .project .figure{ aspect-ratio: 4/3 !important; max-height: 12cm !important; width: auto !important; max-width: 100% !important; margin: 10px auto !important; }
-    .project .figure.vertical{ aspect-ratio: 3/4 !important; max-height: 16cm !important; max-width: 80% !important; margin: 10px auto !important; } 
+    .project .figure.vertical{ aspect-ratio: 3/4 !important; max-height: 16cm !important; max-width: 80% !important; margin: 10px auto !important; }
     @page{ margin: 1.6cm; }
     @page{
-      @bottom-center{ content: counter(page); font-family: monospace; font-size: 12pt; color: #55534c; }
+      @bottom-center{ content: counter(page); font-family: monospace; font-size: 9pt; color: #55534c; }
     }
   }
 </style>
@@ -522,7 +537,7 @@
       return `
       <section class="project" id="p-${i+1}" data-idx="${i}" data-anio="${p.anio}" data-cliente="${p.cliente}" data-categoria="${p.categoria}" data-search="${search}">
         <div class="project-head">
-          <div class="plate">Obra N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
+          <div class="plate">Pieza N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
           <div class="eyebrow">${p.categoria || ''}</div>
         </div>
         <h2>${p.titulo || 'Sin título'}</h2>
@@ -536,18 +551,33 @@
           <div class="project-desc">
             <p>${p.descripcion || ''}</p>
             <div class="desc-actions">
-              ${p.enlace ? `<a class="ext-link" href="${p.enlace}" target="_blank" rel="noopener">Recurso en Internet →</a>` : ''}
-              ${p.pdf ? `<a class="pdf-btn no-print" href="${p.pdf}" target="_blank" rel="noopener">Documento PDF ↓</a>` : ''}
+              ${p.enlace ? `<a class="ext-link" href="${p.enlace}" target="_blank" rel="noopener">Ver caso completo →</a>` : ''}
+              ${p.pdf ? `<a class="pdf-btn no-print" href="${p.pdf}" target="_blank" rel="noopener">Descargar PDF ↓</a>` : ''}
             </div>
           </div>
         </div>
       </section>`;}).join('');
+
+    const categoryCounts = {};
+    data.forEach(p => {
+      const cat = p.categoria || 'Sin categoría';
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+    });
+    const statsHTML = Object.entries(categoryCounts)
+      .sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0], 'es'))
+      .map(([cat,count])=> `<span class="stat-chip">${cat} <b>${count}</b></span>`)
+      .join('');
 
     mainEl.innerHTML = `
       <section class="hero">
         <span class="eyebrow">Obras seleccionadas</span>
         <h1>Portafolios &nbsp;${GLYPH_HTML}</h1>
         <p class="lead">Reseñas de proyectos de diseño gráfico, diseño multimedia y comunicación visual de <b>Rodolfo&nbsp;Gerardo&nbsp;Ortiz&nbsp;Morales</b></p>
+      </section>
+
+      <section class="stats-section">
+        <span class="eyebrow">Obras por categoría</span>
+        <div class="stats-list">${statsHTML}</div>
       </section>
 
       <section class="index-section" id="indice">
@@ -557,22 +587,25 @@
           <select id="filterAnio"><option value="">Año</option></select>
           <select id="filterCliente"><option value="">Cliente</option></select>
           <select id="filterCategoria"><option value="">Categoría</option></select>
+          <button type="button" class="clear-btn" id="toggleIndexBtn" aria-expanded="false">Todas las obras</button>
           <button type="button" class="clear-btn" id="clearFilters">Limpiar</button>
         </div>
-        <ul class="toc">${toc}</ul>
-        <p class="no-results" id="noResults" style="display:none;">No se encontraron proyectos con esos filtros.</p>
+        <div class="index-list-wrap collapsed" id="indexListWrap">
+          <ul class="toc">${toc}</ul>
+          <p class="no-results" id="noResults" style="display:none;">No se encontraron proyectos con esos filtros.</p>
+        </div>
       </section>
 
       ${projects}
 
       <footer class="site" id="contacto">
         <h3>El autor</h3>
-        <p class="contact-line">Profesional académico en diseño y producción multimedia · Profesional en proyectos sociales · Académico universitario. Maestría en Diseño y Producción Multimedia — UNIR, España, Licenciatura en Diseño Gráfico — SEP, México, TSU en Proyectos Sociales — UnADM, México, Especialización en Interpretación y Análisis de Iconografía e Iconología en el Arte — Universidad de Vitoria-Gasteiz EUNEIZ, País Vasco, España
+        <p class="contact-line"><img src="rodo_cdmx.jpg" loading="lazy" style="float: left; margin-right: 20px; margin-bottom: 10px; alt="Rodolfo G. Ortiz Morales" width="200" >Profesional académico en diseño y producción multimedia · Profesional en proyectos sociales · Académico universitario. Maestría en Diseño y Producción Multimedia — UNIR, España, Licenciatura en Diseño Gráfico — SEP, México, TSU en Proyectos Sociales — UnADM, México, Especialización en Interpretación y Análisis de Iconografía e Iconología en el Arte — Universidad de Vitoria-Gasteiz EUNEIZ, País Vasco, España
 
 rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
         <div class="foot-meta">
-          <span>Públicación gestionado por Rodolfo Gerardo Ortiz Morales. Diseño, programación e integración Web con Claude.ai. Ciudad de México, 2025 - ${new Date().getFullYear()}</span>
-          <span>${data.length} proyecto${data.length===1?'':'s'} en este portafolio</span>
+          <p><span>Públicación gestionado por Rodolfo Gerardo Ortiz Morales. Diseño, programación e integración Web con Claude.ai. Ciudad de México, 2025 - ${new Date().getFullYear()}</span>.
+          <span>${data.length} proyecto${data.length===1?'':'s'} en este portafolios</span></p>
         </div>
       </footer>
     `;
@@ -587,7 +620,23 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
     const selCategoria = document.getElementById('filterCategoria');
     const clearBtn = document.getElementById('clearFilters');
     const noResults = document.getElementById('noResults');
+    const toggleBtn = document.getElementById('toggleIndexBtn');
+    const listWrap = document.getElementById('indexListWrap');
     if(!searchInput) return;
+
+    function openList(){
+      listWrap.classList.remove('collapsed');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      toggleBtn.textContent = 'Ocultar índice';
+    }
+    function closeList(){
+      listWrap.classList.add('collapsed');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      toggleBtn.textContent = 'Todas las obras';
+    }
+    toggleBtn.addEventListener('click', ()=>{
+      if(listWrap.classList.contains('collapsed')) openList(); else closeList();
+    });
 
     function uniqueSorted(field){
       return [...new Set(data.map(p => p[field]).filter(Boolean))].sort((a,b)=> a.localeCompare(b, 'es'));
@@ -620,6 +669,9 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
       });
 
       noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+
+      const hasActiveFilter = q || anio || cliente || categoria;
+      if(hasActiveFilter) openList();
     }
 
     searchInput.addEventListener('input', applyFilters);
@@ -628,6 +680,7 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
       searchInput.value = '';
       selAnio.value = ''; selCliente.value = ''; selCategoria.value = '';
       applyFilters();
+      closeList();
     });
   }
 
