@@ -343,12 +343,11 @@
     .project-meta div span.value{ font-size: 8pt !important; }
     .project-meta div span.label{ font-size: 5.5pt !important; }
     .project-desc{ font-size: 9pt !important; line-height: 1.45 !important; }
-	  /* ---------- cambio tamaño de impresión de imagenes---------- */
-    .project .figure{ aspect-ratio: 4/3 !important; max-height: 12cm !important; width: auto !important; max-width: 100% !important; margin: 10px auto !important; }
-    .project .figure.vertical{ aspect-ratio: 3/4 !important; max-height: 16cm !important; max-width: 80% !important; margin: 10px auto !important; } 
+    .project .figure{ aspect-ratio: 4/3 !important; max-height: 9cm !important; width: auto !important; max-width: 100% !important; margin: 10px auto !important; }
+    .project .figure.vertical{ aspect-ratio: 3/4 !important; max-height: 8cm !important; max-width: 45% !important; margin: 10px auto !important; }
     @page{ margin: 1.6cm; }
     @page{
-      @bottom-center{ content: counter(page); font-family: monospace; font-size: 12pt; color: #55534c; }
+      @bottom-center{ content: counter(page); font-family: monospace; font-size: 9pt; color: #55534c; }
     }
   }
 </style>
@@ -522,7 +521,7 @@
       return `
       <section class="project" id="p-${i+1}" data-idx="${i}" data-anio="${p.anio}" data-cliente="${p.cliente}" data-categoria="${p.categoria}" data-search="${search}">
         <div class="project-head">
-          <div class="plate">Obra N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
+          <div class="plate">Pieza N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
           <div class="eyebrow">${p.categoria || ''}</div>
         </div>
         <h2>${p.titulo || 'Sin título'}</h2>
@@ -536,8 +535,8 @@
           <div class="project-desc">
             <p>${p.descripcion || ''}</p>
             <div class="desc-actions">
-              ${p.enlace ? `<a class="ext-link" href="${p.enlace}" target="_blank" rel="noopener">Recurso en Internet →</a>` : ''}
-              ${p.pdf ? `<a class="pdf-btn no-print" href="${p.pdf}" target="_blank" rel="noopener">Documento PDF ↓</a>` : ''}
+              ${p.enlace ? `<a class="ext-link" href="${p.enlace}" target="_blank" rel="noopener">Ver caso completo →</a>` : ''}
+              ${p.pdf ? `<a class="pdf-btn no-print" href="${p.pdf}" target="_blank" rel="noopener">Descargar PDF ↓</a>` : ''}
             </div>
           </div>
         </div>
