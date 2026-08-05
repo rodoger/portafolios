@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
 <style>
   :root{
     --paper: #e7e5e0;
@@ -408,6 +408,7 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function(){
 (function(){
   const mainEl = document.getElementById('mainContent');
 
@@ -456,7 +457,9 @@
     const m1 = url.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
     const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
     const id = (m1 && m1[1]) || (m2 && m2[1]);
-    if(id) return `https://drive.google.com/uc?export=view&id=${id}`;
+    // Use Drive's thumbnail endpoint: it serves a resized, compressed JPEG
+    // instead of the original file, which is much lighter on mobile networks.
+    if(id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
     return url;
   }
 
@@ -509,7 +512,7 @@
       : '';
     const canvasEl = isGif(src) ? `<canvas class="figure-freeze"></canvas>` : '';
     return `<div class="${cls}">
-      <img class="figure-img" src="${src}" alt="${titulo}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;fallback&quot;>Imagen no disponible</div>'">
+      <img class="figure-img" src="${src}" alt="${titulo}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<div class=&quot;fallback&quot;>Imagen no disponible</div>'">
       ${canvasEl}
       <div class="figure-controls">
         ${gifBtn}
@@ -546,7 +549,7 @@
       return `
       <section class="project" id="p-${i+1}" data-idx="${i}" data-anio="${p.anio}" data-cliente="${p.cliente}" data-categoria="${p.categoria}" data-search="${search}">
         <div class="project-head">
-          <div class="plate">Pieza N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
+          <div class="plate">Pieza N.º <b class="plate-num">${String(i+1).padStart(2,'0')}</b> / <span class="plate-total">${String(data.length).padStart(2,'0')}</span></div>
           <div class="eyebrow">${p.categoria || ''}</div>
         </div>
         <h2>${p.titulo || 'Sin título'}</h2>
@@ -622,6 +625,23 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
     setupFilters(data);
   }
 
+  function renumberVisible(){
+    const visibleSections = [...document.querySelectorAll('.project')].filter(s => s.style.display !== 'none');
+    const total = String(visibleSections.length).padStart(2,'0');
+    visibleSections.forEach((sec, idx) => {
+      const num = sec.querySelector('.plate-num');
+      const tot = sec.querySelector('.plate-total');
+      if(num) num.textContent = String(idx+1).padStart(2,'0');
+      if(tot) tot.textContent = total;
+    });
+
+    const visibleTocItems = [...document.querySelectorAll('.toc li[data-idx]')].filter(li => li.style.display !== 'none');
+    visibleTocItems.forEach((li, idx) => {
+      const num = li.querySelector('.num');
+      if(num) num.textContent = String(idx+1).padStart(2,'0');
+    });
+  }
+
   function setupFilters(data){
     const searchInput = document.getElementById('searchInput');
     const selAnio = document.getElementById('filterAnio');
@@ -681,6 +701,8 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
 
       const hasActiveFilter = q || anio || cliente || categoria;
       if(hasActiveFilter) openList();
+
+      renumberVisible();
     }
 
     searchInput.addEventListener('input', applyFilters);
@@ -691,6 +713,8 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
       applyFilters();
       closeList();
     });
+
+    renumberVisible();
   }
 
   function loadFromUrl(url){
@@ -827,6 +851,7 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
     renderProjects(SAMPLE_DATA);
   }
 })();
+});
 </script>
 </body>
 </html>
