@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
     --paper: #e7e5e0;
@@ -408,7 +408,6 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
 (function(){
   const mainEl = document.getElementById('mainContent');
 
@@ -457,9 +456,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const m1 = url.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
     const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
     const id = (m1 && m1[1]) || (m2 && m2[1]);
-    // Use Drive's thumbnail endpoint: it serves a resized, compressed JPEG
-    // instead of the original file, which is much lighter on mobile networks.
-    if(id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+    if(id) return `https://drive.google.com/uc?export=view&id=${id}`;
     return url;
   }
 
@@ -512,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function(){
       : '';
     const canvasEl = isGif(src) ? `<canvas class="figure-freeze"></canvas>` : '';
     return `<div class="${cls}">
-      <img class="figure-img" src="${src}" alt="${titulo}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<div class=&quot;fallback&quot;>Imagen no disponible</div>'">
+      <img class="figure-img" src="${src}" alt="${titulo}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;fallback&quot;>Imagen no disponible</div>'">
       ${canvasEl}
       <div class="figure-controls">
         ${gifBtn}
@@ -549,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function(){
       return `
       <section class="project" id="p-${i+1}" data-idx="${i}" data-anio="${p.anio}" data-cliente="${p.cliente}" data-categoria="${p.categoria}" data-search="${search}">
         <div class="project-head">
-          <div class="plate">Pieza N.º <b class="plate-num">${String(i+1).padStart(2,'0')}</b> / <span class="plate-total">${String(data.length).padStart(2,'0')}</span></div>
+          <div class="plate">Obra N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
           <div class="eyebrow">${p.categoria || ''}</div>
         </div>
         <h2>${p.titulo || 'Sin título'}</h2>
@@ -612,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
       <footer class="site" id="contacto">
         <h3>El autor</h3>
-        <p class="contact-line"><img src="rodo_cdmx.jpg" loading="lazy" style="float: left; margin-right: 20px; margin-bottom: 10px; alt="Rodolfo G. Ortiz Morales" width="200" >Profesional académico en diseño y producción multimedia · Profesional en proyectos sociales · Académico universitario. Maestría en Diseño y Producción Multimedia — UNIR, España, Licenciatura en Diseño Gráfico — SEP, México, TSU en Proyectos Sociales — UnADM, México, Especialización en Interpretación y Análisis de Iconografía e Iconología en el Arte — Universidad de Vitoria-Gasteiz EUNEIZ, País Vasco, España
+        <p class="contact-line"><img src="rodo_cdmx.jpg" loading="lazy" style="float: left; margin-right: 20px; margin-bottom: 10px; alt="Rodolfo G. Ortiz Morales" width="200" >Rodolfo Gerardo Ortiz Morales: profesional académico en diseño y producción multimedia, profesional en proyectos sociales, académico universitario. Maestría en Diseño y Producción Multimedia — UNIR, España, Licenciatura en Diseño Gráfico — SEP, México, TSU en Proyectos Sociales — UnADM, México, Especialización en Interpretación y Análisis de Iconografía e Iconología en el Arte — Universidad de Vitoria-Gasteiz EUNEIZ, País Vasco, España
 
 rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
         <div class="foot-meta">
@@ -623,23 +620,6 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
     `;
 
     setupFilters(data);
-  }
-
-  function renumberVisible(){
-    const visibleSections = [...document.querySelectorAll('.project')].filter(s => s.style.display !== 'none');
-    const total = String(visibleSections.length).padStart(2,'0');
-    visibleSections.forEach((sec, idx) => {
-      const num = sec.querySelector('.plate-num');
-      const tot = sec.querySelector('.plate-total');
-      if(num) num.textContent = String(idx+1).padStart(2,'0');
-      if(tot) tot.textContent = total;
-    });
-
-    const visibleTocItems = [...document.querySelectorAll('.toc li[data-idx]')].filter(li => li.style.display !== 'none');
-    visibleTocItems.forEach((li, idx) => {
-      const num = li.querySelector('.num');
-      if(num) num.textContent = String(idx+1).padStart(2,'0');
-    });
   }
 
   function setupFilters(data){
@@ -701,8 +681,6 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
 
       const hasActiveFilter = q || anio || cliente || categoria;
       if(hasActiveFilter) openList();
-
-      renumberVisible();
     }
 
     searchInput.addEventListener('input', applyFilters);
@@ -713,8 +691,6 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
       applyFilters();
       closeList();
     });
-
-    renumberVisible();
   }
 
   function loadFromUrl(url){
@@ -851,7 +827,6 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
     renderProjects(SAMPLE_DATA);
   }
 })();
-});
 </script>
 </body>
 </html>
