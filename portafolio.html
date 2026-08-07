@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,400;1,9..144,600&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
     --paper: #e7e5e0;
@@ -171,6 +171,7 @@
     padding: 7px 14px; white-space: nowrap;
   }
   .stat-chip b{ color: var(--accent); font-weight: 500; margin-left: 2px; }
+  .stat-chip.stat-total{ border-color: var(--accent); color: var(--ink); }
 
   .index-list-wrap{ max-height: 6000px; overflow: hidden; transition: max-height .35s ease; }
   .index-list-wrap.collapsed{ max-height: 0; }
@@ -199,18 +200,37 @@
   .filter-bar{
     display:flex; flex-wrap:wrap; gap:14px; align-items:center;
     margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--rule);
+    position: relative;
   }
   .filter-bar input[type=text]{
     flex: 1 1 220px; font-family:'IBM Plex Sans', sans-serif; font-size:0.9rem;
     padding: 9px 12px; border: 1px solid var(--rule); background: transparent; color: var(--ink);
     border-radius:3px;
   }
-  .filter-bar select{
+  .filter-bar input:focus{ outline:none; border-color: var(--accent); color: var(--ink); }
+
+  .ms-filter{ position: relative; }
+  .ms-toggle{
     font-family:'IBM Plex Mono', monospace; font-size:0.74rem; text-transform:uppercase;
     padding: 9px 10px; border:1px solid var(--rule); background: var(--paper); color: var(--ink-soft);
-    border-radius:3px; letter-spacing:.03em;
+    border-radius:3px; letter-spacing:.03em; cursor:pointer; white-space:nowrap;
   }
-  .filter-bar input:focus, .filter-bar select:focus{ outline:none; border-color: var(--accent); color: var(--ink); }
+  .ms-toggle:hover{ border-color: var(--accent); }
+  .ms-toggle.active{ border-color: var(--accent); color: var(--accent); }
+  .ms-panel{
+    position:absolute; top: calc(100% + 6px); left:0; z-index: 25; min-width: 210px; max-height: 260px;
+    overflow-y:auto; background: var(--paper); border:1px solid var(--rule); border-radius:3px;
+    padding: 6px; box-shadow: 0 10px 28px rgba(0,0,0,.14);
+  }
+  .ms-panel[hidden]{ display:none; }
+  .ms-option{
+    display:flex; align-items:center; gap:9px; padding: 7px 6px;
+    font-family:'IBM Plex Sans', sans-serif; font-size:0.85rem; color: var(--ink);
+    cursor:pointer; border-radius:2px;
+  }
+  .ms-option:hover{ background: var(--paper-2); }
+  .ms-option input{ accent-color: var(--accent); width:14px; height:14px; flex-shrink:0; }
+
   .filter-bar .clear-btn{
     font-family:'IBM Plex Mono', monospace; font-size:0.7rem; text-transform:uppercase;
     background:transparent; border:1px solid var(--rule); color: var(--ink-faint);
@@ -408,7 +428,6 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
 (function(){
   const mainEl = document.getElementById('mainContent');
 
@@ -457,9 +476,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const m1 = url.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
     const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
     const id = (m1 && m1[1]) || (m2 && m2[1]);
-    // Use Drive's thumbnail endpoint: it serves a resized, compressed JPEG
-    // instead of the original file, which is much lighter on mobile networks.
-    if(id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1600`;
+    if(id) return `https://drive.google.com/uc?export=view&id=${id}`;
     return url;
   }
 
@@ -512,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function(){
       : '';
     const canvasEl = isGif(src) ? `<canvas class="figure-freeze"></canvas>` : '';
     return `<div class="${cls}">
-      <img class="figure-img" src="${src}" alt="${titulo}" loading="lazy" decoding="async" onerror="this.parentElement.innerHTML='<div class=&quot;fallback&quot;>Imagen no disponible</div>'">
+      <img class="figure-img" src="${src}" alt="${titulo}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;fallback&quot;>Imagen no disponible</div>'">
       ${canvasEl}
       <div class="figure-controls">
         ${gifBtn}
@@ -549,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function(){
       return `
       <section class="project" id="p-${i+1}" data-idx="${i}" data-anio="${p.anio}" data-cliente="${p.cliente}" data-categoria="${p.categoria}" data-search="${search}">
         <div class="project-head">
-          <div class="plate">Pieza N.º <b class="plate-num">${String(i+1).padStart(2,'0')}</b> / <span class="plate-total">${String(data.length).padStart(2,'0')}</span></div>
+          <div class="plate">Obra N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
           <div class="eyebrow">${p.categoria || ''}</div>
         </div>
         <h2>${p.titulo || 'Sin título'}</h2>
@@ -563,7 +580,7 @@ document.addEventListener('DOMContentLoaded', function(){
           <div class="project-desc">
             <p>${p.descripcion || ''}</p>
             <div class="desc-actions">
-              ${p.enlace ? `<a class="ext-link" href="${p.enlace}" target="_blank" rel="noopener">Ver caso completo →</a>` : ''}
+              ${p.enlace ? `<a class="ext-link" href="${p.enlace}" target="_blank" rel="noopener">Ver obra en Internet →</a>` : ''}
               ${p.pdf ? `<a class="pdf-btn no-print" href="${p.pdf}" target="_blank" rel="noopener">Descargar PDF ↓</a>` : ''}
             </div>
           </div>
@@ -589,16 +606,28 @@ document.addEventListener('DOMContentLoaded', function(){
 
       <section class="stats-section">
         <span class="eyebrow">Obras por categoría</span>
-        <div class="stats-list">${statsHTML}</div>
+        <div class="stats-list">
+          <span class="stat-chip stat-total">Total <b>${data.length}</b></span>
+          ${statsHTML}
+        </div>
       </section>
 
       <section class="index-section" id="indice">
         <span class="eyebrow">Índice</span>
         <div class="filter-bar no-print">
           <input type="text" id="searchInput" placeholder="Buscar por título, cliente, categoría…">
-          <select id="filterAnio"><option value="">Año</option></select>
-          <select id="filterCliente"><option value="">Cliente</option></select>
-          <select id="filterCategoria"><option value="">Categoría</option></select>
+          <div class="ms-filter" id="msAnio">
+            <button type="button" class="ms-toggle" data-label="Año" aria-expanded="false">Año</button>
+            <div class="ms-panel" hidden></div>
+          </div>
+          <div class="ms-filter" id="msCliente">
+            <button type="button" class="ms-toggle" data-label="Cliente" aria-expanded="false">Cliente</button>
+            <div class="ms-panel" hidden></div>
+          </div>
+          <div class="ms-filter" id="msCategoria">
+            <button type="button" class="ms-toggle" data-label="Categoría" aria-expanded="false">Categoría</button>
+            <div class="ms-panel" hidden></div>
+          </div>
           <button type="button" class="clear-btn" id="toggleIndexBtn" aria-expanded="false">Todas las obras</button>
           <button type="button" class="clear-btn" id="clearFilters">Limpiar</button>
         </div>
@@ -625,28 +654,8 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
     setupFilters(data);
   }
 
-  function renumberVisible(){
-    const visibleSections = [...document.querySelectorAll('.project')].filter(s => s.style.display !== 'none');
-    const total = String(visibleSections.length).padStart(2,'0');
-    visibleSections.forEach((sec, idx) => {
-      const num = sec.querySelector('.plate-num');
-      const tot = sec.querySelector('.plate-total');
-      if(num) num.textContent = String(idx+1).padStart(2,'0');
-      if(tot) tot.textContent = total;
-    });
-
-    const visibleTocItems = [...document.querySelectorAll('.toc li[data-idx]')].filter(li => li.style.display !== 'none');
-    visibleTocItems.forEach((li, idx) => {
-      const num = li.querySelector('.num');
-      if(num) num.textContent = String(idx+1).padStart(2,'0');
-    });
-  }
-
   function setupFilters(data){
     const searchInput = document.getElementById('searchInput');
-    const selAnio = document.getElementById('filterAnio');
-    const selCliente = document.getElementById('filterCliente');
-    const selCategoria = document.getElementById('filterCategoria');
     const clearBtn = document.getElementById('clearFilters');
     const noResults = document.getElementById('noResults');
     const toggleBtn = document.getElementById('toggleIndexBtn');
@@ -670,27 +679,75 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
     function uniqueSorted(field){
       return [...new Set(data.map(p => p[field]).filter(Boolean))].sort((a,b)=> a.localeCompare(b, 'es'));
     }
-    function fillSelect(sel, values){
-      values.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = v; opt.textContent = v;
-        sel.appendChild(opt);
-      });
+
+    // ---- Custom multi-select (checkbox dropdown) filters ----
+    const allPanels = [];
+    function closeAllPanels(){
+      allPanels.forEach(p => { p.panel.hidden = true; p.toggle.setAttribute('aria-expanded','false'); });
     }
-    fillSelect(selAnio, uniqueSorted('anio'));
-    fillSelect(selCliente, uniqueSorted('cliente'));
-    fillSelect(selCategoria, uniqueSorted('categoria'));
+    document.addEventListener('click', (e)=>{
+      if(!e.target.closest('.ms-filter')) closeAllPanels();
+    });
+
+    function createMultiSelect(containerId, field, values){
+      const container = document.getElementById(containerId);
+      const toggle = container.querySelector('.ms-toggle');
+      const panel = container.querySelector('.ms-panel');
+      const label = toggle.dataset.label;
+      const selected = new Set();
+
+      values.forEach(v => {
+        const opt = document.createElement('label');
+        opt.className = 'ms-option';
+        opt.innerHTML = `<input type="checkbox" value="${v}"><span>${v}</span>`;
+        panel.appendChild(opt);
+      });
+
+      function updateLabel(){
+        toggle.textContent = selected.size ? `${label} (${selected.size})` : label;
+        toggle.classList.toggle('active', selected.size > 0);
+      }
+
+      panel.addEventListener('change', (e)=>{
+        if(e.target.type !== 'checkbox') return;
+        if(e.target.checked) selected.add(e.target.value); else selected.delete(e.target.value);
+        updateLabel();
+        applyFilters();
+      });
+
+      toggle.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const willOpen = panel.hidden;
+        closeAllPanels();
+        panel.hidden = !willOpen;
+        toggle.setAttribute('aria-expanded', String(willOpen));
+      });
+
+      allPanels.push({ toggle, panel });
+
+      return {
+        selected,
+        clear(){
+          selected.clear();
+          panel.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+          updateLabel();
+        }
+      };
+    }
+
+    const msAnio = createMultiSelect('msAnio', 'anio', uniqueSorted('anio'));
+    const msCliente = createMultiSelect('msCliente', 'cliente', uniqueSorted('cliente'));
+    const msCategoria = createMultiSelect('msCategoria', 'categoria', uniqueSorted('categoria'));
 
     function applyFilters(){
       const q = norm(searchInput.value);
-      const anio = selAnio.value, cliente = selCliente.value, categoria = selCategoria.value;
       let visibleCount = 0;
 
       document.querySelectorAll('.toc li[data-idx]').forEach(li => {
         const match = (!q || li.dataset.search.includes(q))
-          && (!anio || li.dataset.anio === anio)
-          && (!cliente || li.dataset.cliente === cliente)
-          && (!categoria || li.dataset.categoria === categoria);
+          && (msAnio.selected.size === 0 || msAnio.selected.has(li.dataset.anio))
+          && (msCliente.selected.size === 0 || msCliente.selected.has(li.dataset.cliente))
+          && (msCategoria.selected.size === 0 || msCategoria.selected.has(li.dataset.categoria));
         li.style.display = match ? '' : 'none';
         const section = document.getElementById(`p-${Number(li.dataset.idx)+1}`);
         if(section) section.style.display = match ? '' : 'none';
@@ -699,22 +756,17 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
 
       noResults.style.display = visibleCount === 0 ? 'block' : 'none';
 
-      const hasActiveFilter = q || anio || cliente || categoria;
+      const hasActiveFilter = q || msAnio.selected.size || msCliente.selected.size || msCategoria.selected.size;
       if(hasActiveFilter) openList();
-
-      renumberVisible();
     }
 
     searchInput.addEventListener('input', applyFilters);
-    [selAnio, selCliente, selCategoria].forEach(sel => sel.addEventListener('change', applyFilters));
     clearBtn.addEventListener('click', ()=>{
       searchInput.value = '';
-      selAnio.value = ''; selCliente.value = ''; selCategoria.value = '';
+      msAnio.clear(); msCliente.clear(); msCategoria.clear();
       applyFilters();
       closeList();
     });
-
-    renumberVisible();
   }
 
   function loadFromUrl(url){
@@ -851,7 +903,6 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
     renderProjects(SAMPLE_DATA);
   }
 })();
-});
 </script>
 </body>
 </html>
