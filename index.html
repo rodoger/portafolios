@@ -566,7 +566,7 @@
       return `
       <section class="project" id="p-${i+1}" data-idx="${i}" data-anio="${p.anio}" data-cliente="${p.cliente}" data-categoria="${p.categoria}" data-search="${search}">
         <div class="project-head">
-          <div class="plate">Obra N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
+          <div class="plate">Obra N.º <b class="plate-num">${String(i+1).padStart(2,'0')}</b> / <span class="plate-total">${String(data.length).padStart(2,'0')}</span></div>
           <div class="eyebrow">${p.categoria || ''}</div>
         </div>
         <h2>${p.titulo || 'Sin título'}</h2>
@@ -659,6 +659,23 @@ rgortiz@politicas.unam.mx &nbsp;&nbsp;&nbsp;rodoger.om@gmail.com</p>
     `;
 
     setupFilters(data);
+  }
+
+  function renumberVisible(){
+    const visibleSections = [...document.querySelectorAll('.project')].filter(s => s.style.display !== 'none');
+    const total = String(visibleSections.length).padStart(2,'0');
+    visibleSections.forEach((sec, idx) => {
+      const num = sec.querySelector('.plate-num');
+      const tot = sec.querySelector('.plate-total');
+      if(num) num.textContent = String(idx+1).padStart(2,'0');
+      if(tot) tot.textContent = total;
+    });
+
+    const visibleTocItems = [...document.querySelectorAll('.toc li[data-idx]')].filter(li => li.style.display !== 'none');
+    visibleTocItems.forEach((li, idx) => {
+      const num = li.querySelector('.num');
+      if(num) num.textContent = String(idx+1).padStart(2,'0');
+    });
   }
 
   function setupFilters(data){
@@ -765,6 +782,8 @@ rgortiz@politicas.unam.mx &nbsp;&nbsp;&nbsp;rodoger.om@gmail.com</p>
 
       const hasActiveFilter = q || msAnio.selected.size || msCliente.selected.size || msCategoria.selected.size;
       if(hasActiveFilter) openList();
+
+      renumberVisible();
     }
 
     searchInput.addEventListener('input', applyFilters);
@@ -774,6 +793,8 @@ rgortiz@politicas.unam.mx &nbsp;&nbsp;&nbsp;rodoger.om@gmail.com</p>
       applyFilters();
       closeList();
     });
+
+    renumberVisible();
   }
 
   function loadFromUrl(url){
