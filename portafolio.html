@@ -566,7 +566,7 @@
       return `
       <section class="project" id="p-${i+1}" data-idx="${i}" data-anio="${p.anio}" data-cliente="${p.cliente}" data-categoria="${p.categoria}" data-search="${search}">
         <div class="project-head">
-          <div class="plate">Obra N.º <b>${String(i+1).padStart(2,'0')}</b> / ${String(data.length).padStart(2,'0')}</div>
+          <div class="plate">Obra N.º <b class="plate-num">${String(i+1).padStart(2,'0')}</b> / <span class="plate-total">${String(data.length).padStart(2,'0')}</span></div>
           <div class="eyebrow">${p.categoria || ''}</div>
         </div>
         <h2>${p.titulo || 'Sin título'}</h2>
@@ -641,17 +641,41 @@
 
       <footer class="site" id="contacto">
         <h3>El autor</h3>
-        <p class="contact-line"><img src="rodo_cdmx.jpg" loading="lazy" style="float: left; margin-right: 20px; margin-bottom: 10px; alt="Rodolfo G. Ortiz Morales" width="200" >Profesional académico en diseño y producción multimedia · Profesional en proyectos sociales · Académico universitario. Maestría en Diseño y Producción Multimedia — UNIR, España, Licenciatura en Diseño Gráfico — SEP, México, TSU en Proyectos Sociales — UnADM, México, Especialización en Interpretación y Análisis de Iconografía e Iconología en el Arte — Universidad de Vitoria-Gasteiz EUNEIZ, País Vasco, España
+        <p class="contact-line"><img src="rodo_cdmx.jpg" loading="lazy" style="float: left; margin-right: 20px; margin-bottom: 10px; alt="Rodolfo G. Ortiz Morales" width="200" ><b>— Rodolfo&nbsp;Gerardo Ortiz&nbsp;Morales —</b></br>
+	•	Profesional académico en diseño y producción multimedia</br>
+	•	Profesional en proyectos sociales</br>
+	•	Académico universitario</br>
+	•	Maestría en Diseño y Producción Multimedia — UNIR, España</br>
+	•	Licenciatura en Diseño Gráfico — SEP, CENEVAL, México</br>
+	•	Técnico Superior Universitario en Proyectos Sociales — UnADM, México</br>
+	•	Especialización en Interpretación y Análisis de Iconografía e Iconología en el Arte — Universidad de Vitoria-Gasteiz EUNEIZ, País Vasco, España</br></br>
 
-rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
+rgortiz@politicas.unam.mx &nbsp;&nbsp;&nbsp;rodoger.om@gmail.com</p>
         <div class="foot-meta">
-          <p><span>Públicación gestionado por Rodolfo Gerardo Ortiz Morales. Diseño, programación e integración Web con Claude.ai. Ciudad de México, 2025 - ${new Date().getFullYear()}</span>.
+          <p><span>Públicación gestionado por Rodolfo&nbsp;Gerardo&nbsp;Ortiz&nbsp;Morales. Diseño, programación e integración Web con Claude.ai. Ciudad&nbsp;de&nbsp;México, 2025 - ${new Date().getFullYear()}</span>.
           <span>${data.length} proyecto${data.length===1?'':'s'} en este portafolios</span></p>
         </div>
       </footer>
     `;
 
     setupFilters(data);
+  }
+
+  function renumberVisible(){
+    const visibleSections = [...document.querySelectorAll('.project')].filter(s => s.style.display !== 'none');
+    const total = String(visibleSections.length).padStart(2,'0');
+    visibleSections.forEach((sec, idx) => {
+      const num = sec.querySelector('.plate-num');
+      const tot = sec.querySelector('.plate-total');
+      if(num) num.textContent = String(idx+1).padStart(2,'0');
+      if(tot) tot.textContent = total;
+    });
+
+    const visibleTocItems = [...document.querySelectorAll('.toc li[data-idx]')].filter(li => li.style.display !== 'none');
+    visibleTocItems.forEach((li, idx) => {
+      const num = li.querySelector('.num');
+      if(num) num.textContent = String(idx+1).padStart(2,'0');
+    });
   }
 
   function setupFilters(data){
@@ -758,6 +782,8 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
 
       const hasActiveFilter = q || msAnio.selected.size || msCliente.selected.size || msCategoria.selected.size;
       if(hasActiveFilter) openList();
+
+      renumberVisible();
     }
 
     searchInput.addEventListener('input', applyFilters);
@@ -767,6 +793,8 @@ rgortiz@politicas.unam.mx  rodoger.om@gmail.com · Ciudad de México</p>
       applyFilters();
       closeList();
     });
+
+    renumberVisible();
   }
 
   function loadFromUrl(url){
