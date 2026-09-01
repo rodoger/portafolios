@@ -173,8 +173,12 @@
   .stat-chip b{ color: var(--accent); font-weight: 500; margin-left: 2px; }
   .stat-chip.stat-total{ border-color: var(--accent); color: var(--ink); }
 
-  .index-list-wrap{ max-height: 6000px; overflow: hidden; transition: max-height .35s ease; }
-  .index-list-wrap.collapsed{ max-height: 0; }
+  .index-list-wrap{
+    display: grid; grid-template-rows: 1fr;
+    transition: grid-template-rows .35s ease;
+  }
+  .index-list-wrap.collapsed{ grid-template-rows: 0fr; }
+  .index-list-inner{ overflow: hidden; min-height: 0; }
 
   .toc{ list-style:none; margin:0; padding:0; border-top: 1px solid var(--rule); }
   .toc li{ border-bottom: 1px solid var(--rule); }
@@ -373,7 +377,8 @@
     .project{ break-inside: avoid; page-break-before: always; border-top:none; padding-top: 20px; }
     .project:first-of-type{ page-break-before: auto; }
     .index-section{ page-break-after: always; }
-    .index-list-wrap, .index-list-wrap.collapsed{ max-height: none !important; overflow: visible !important; }
+    .index-list-wrap, .index-list-wrap.collapsed{ grid-template-rows: 1fr !important; }
+    .index-list-inner{ overflow: visible !important; }
     .figure{ break-inside: avoid; }
     a.ext-link::after{ content: " (" attr(href) ")"; font-size: 0.7em; }
 
@@ -628,12 +633,14 @@
             <button type="button" class="ms-toggle" data-label="Categoría" aria-expanded="false">Categoría</button>
             <div class="ms-panel" hidden></div>
           </div>
-          <button type="button" class="clear-btn" id="toggleIndexBtn" aria-expanded="false">Todas las obras</button>
+          <button type="button" class="clear-btn" id="toggleIndexBtn" aria-expanded="false">Mostrar índice</button>
           <button type="button" class="clear-btn" id="clearFilters">Limpiar</button>
         </div>
         <div class="index-list-wrap collapsed" id="indexListWrap">
-          <ul class="toc">${toc}</ul>
-          <p class="no-results" id="noResults" style="display:none;">No se encontraron proyectos con esos filtros.</p>
+          <div class="index-list-inner">
+            <ul class="toc">${toc}</ul>
+            <p class="no-results" id="noResults" style="display:none;">No se encontraron proyectos con esos filtros.</p>
+          </div>
         </div>
       </section>
 
